@@ -2,6 +2,8 @@
 using ConsoleApp_DepInjectionDemo;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog;
+using Serilog.Events;
 using System.Runtime.CompilerServices;
 
 public class Program
@@ -22,6 +24,13 @@ public class Program
               services.AddSingleton<INumberService, NumberService>();
               services.Configure<NumberConfig>(context.Configuration.GetSection("Number"));
           })
+          .UseSerilog((context, services, configuration) => configuration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .WriteTo.File($"report-{DateTimeOffset.UtcNow.ToString("yyyy-MM-dd-HH-mm-ss")}.txt", restrictedToMinimumLevel: LogEventLevel.Warning)
+          )
           .Build();
     }
 }
